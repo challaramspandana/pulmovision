@@ -1,0 +1,14 @@
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# Heavy model files & data
+backend/models/*.pth
+backend/models/*.h5
+
+# Uploaded patient X-rays
+backend/uploads/
+
+# Environment variables & API keys
+.env
