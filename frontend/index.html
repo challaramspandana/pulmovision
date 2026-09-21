@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulmoVision — AI Clinical Decision Support System</title>
+    
+    <!-- Google Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --pv-primary: #0284c7;
+            --pv-primary-dark: #0369a1;
+            --pv-bg: #0f172a;
+            --pv-card-bg: #1e293b;
+            --pv-border: #334155;
+            --pv-text-main: #f8fafc;
+            --pv-text-muted: #94a3b8;
+            --pv-accent: #38bdf8;
+        }
+
+        body {
+            background-color: var(--pv-bg);
+            color: var(--pv-text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Top Navbar */
+        .navbar-custom {
+            background-color: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--pv-border);
+            padding: 14px 28px;
+        }
+
+        .brand-logo {
+            font-weight: 700;
+            font-size: 1.35rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-logo i {
+            color: var(--pv-accent);
+            font-size: 1.6rem;
+        }
+
+        /* Glassmorphism Cards */
+        .pv-card {
+            background: var(--pv-card-bg);
+            border: 1px solid var(--pv-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            margin-bottom: 24px;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .pv-card:hover {
+            border-color: #475569;
+        }
+
+        .card-header-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .card-header-title i {
+            color: var(--pv-accent);
+        }
+
+        /* Form Inputs */
+        .form-label {
+            color: var(--pv-text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .form-control, .form-select {
+            background-color: #0f172a;
+            border: 1px solid var(--pv-border);
+            color: #ffffff;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: #0f172a;
+            border-color: var(--pv-accent);
+            color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+
+        /* Submit Button */
+        .btn-pv-primary {
+            background: linear-gradient(135deg, var(--pv-primary), var(--pv-primary-dark));
+            border: none;
+            color: white;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-pv-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.4);
+            color: white;
+        }
+
+        /* Image Display Box */
+        .scan-container {
+            position: relative;
+            background-color: #020617;
+            border: 1px solid var(--pv-border);
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scan-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .scan-label {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            color: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            border: 1px solid var(--pv-border);
+        }
+
+        /* Progression Badge */
+        .badge-status {
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-worsening { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-improving { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-stable { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+        /* Similar Cases Card */
+        .case-card {
+            background: #0f172a;
+            border: 1px solid var(--pv-border);
+            border-radius: 10px;
+            padding: 14px;
+            height: 100%;
+        }
+
+        /* Report Box */
+        .report-content {
+            background: #090d16;
+            border: 1px solid var(--pv-border);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #cbd5e1;
+            font-size: 0.88rem;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        /* Loader */
+        .loader-box {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner-custom {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-width: 4px;
+            color: var(--pv-accent);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP NAVBAR -->
+    <nav class="navbar navbar-custom mb-4">
+        <div class="container-fluid">
+            <div class="brand-logo">
+                <i class="bi bi-lungs-fill"></i>
+                <span>PulmoVision AI</span>
+            </div>
+            <span class="text-muted small">
+                <i class="bi bi-shield-check text-success me-1"></i> Diagnostic Assistance Active
+            </span>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container-fluid px-4 pb-5">
+        <div class="row">
+            
+            <!-- LEFT COLUMN: PATIENT INPUTS -->
+            <div class="col-lg-4">
+                <div class="pv-card">
+                    <div class="card-header-title">
+                        <i class="bi bi-person-lines-fill"></i>
+                        <span>Patient & Imaging Input</span>
+                    </div>
+                    
+                    <form id="analysisForm">
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Patient Age</label>
+                                <input type="number" id="patientAge" class="form-control" value="45" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Gender</label>
+                                <select id="patientGender" class="form-select">
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Clinical Symptoms</label>
+                            <input type="text" id="symptoms" class="form-control" value="Persistent cough, fever, shortness of breath" required>
+                        </div>
+
+                        <hr class="my-4" style="border-color: var(--pv-border);">
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Current Chest X-Ray <span class="text-danger">*</span></label>
+                            <input type="file" id="currentFile" class="form-control" accept="image/*" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Prior Chest X-Ray <span class="text-muted">(Optional for Progression)</span></label>
+                            <input type="file" id="priorFile" class="form-control" accept="image/*">
+                        </div>
+
+                        <button type="submit" id="btnSubmit" class="btn btn-pv-primary w-100">
+                            <i class="bi bi-cpu-fill me-2"></i> Process & Analyze Scan
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: RESULTS DASHBOARD -->
+            <div class="col-lg-8">
+
+                <!-- INITIAL STATE PLACEHOLDER -->
+                <div id="placeholderState" class="pv-card text-center py-5">
+                    <i class="bi bi-file-earmark-medical text-muted display-3 mb-3"></i>
+                    <h5 class="text-white">No Analysis Processed Yet</h5>
+                    <p class="text-muted small">Upload a chest radiograph on the left and click "Process & Analyze Scan" to generate predictions and heatmaps.</p>
+                </div>
+
+                <!-- LOADING STATE -->
+                <div id="loaderState" class="pv-card loader-box d-none">
+                    <div class="spinner-border spinner-custom mb-3" role="status"></div>
+                    <h5 class="text-white">Analyzing Radiograph...</h5>
+                    <p class="text-muted small">Running DenseNet classification, Grad-CAM extraction, RAG case retrieval, and LLM report synthesis.</p>
+                </div>
+
+                <!-- RESULTS DASHBOARD VIEW -->
+                <div id="resultsState" class="d-none">
+                    
+                    <!-- DUAL SCAN VISUALIZATION & FINDINGS -->
+                    <div class="pv-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="card-header-title mb-0">
+                                <i class="bi bi-eye-fill"></i>
+                                <span>AI Detection & Explainability</span>
+                            </div>
+                            <div id="progressionBadgeContainer"></div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="scan-container">
+                                    <img id="origImg" src="" alt="Original Scan">
+                                    <span class="scan-label"><i class="bi bi-image me-1"></i> Original Radiograph</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="scan-container">
+                                    <img id="gradcamImg" src="" alt="Grad-CAM Overlay">
+                                    <span class="scan-label"><i class="bi bi-activity me-1"></i> Grad-CAM Heatmap</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-3" style="background: #0f172a; border: 1px solid var(--pv-border);">
+                            <div class="row text-center">
+                                <div class="col-6 border-end" style="border-color: var(--pv-border) !important;">
+                                    <span class="text-muted small d-block mb-1">Detected Pathology</span>
+                                    <h4 id="predDisease" class="text-info fw-bold mb-0">---</h4>
+                                </div>
+                                <div class="col-6">
+                                    <span class="text-muted small d-block mb-1">AI Confidence</span>
+                                    <h4 id="predConfidence" class="text-white fw-bold mb-0">--%</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RAG SIMILAR CASES -->
+                    <div class="pv-card">
+                        <div class="card-header-title">
+                            <i class="bi bi-database-search"></i>
+                            <span>Similar Historical Patient Cases (RAG Context)</span>
+                        </div>
+                        <div id="similarCasesList" class="row g-3"></div>
+                    </div>
+
+                    <!-- GENERATED RADIOLOGY REPORT -->
+                    <div class="pv-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="card-header-title mb-0">
+                                <i class="bi bi-journal-medical"></i>
+                                <span>AI-Generated Clinical Summary Report</span>
+                            </div>
+                            <button onclick="window.print()" class="btn btn-outline-light btn-sm rounded-2">
+                                <i class="bi bi-printer me-1"></i> Print / Save PDF
+                            </button>
+                        </div>
+                        <div id="reportBox" class="report-content"></div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+
+        document.getElementById('analysisForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const currentFile = document.getElementById('currentFile').files[0];
+            const priorFile = document.getElementById('priorFile').files[0];
+
+            if (!currentFile) {
+                alert("Please select a current chest X-ray image.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            if (priorFile) formData.append('prior_file', priorFile);
+            formData.append('patient_age', document.getElementById('patientAge').value);
+            formData.append('patient_gender', document.getElementById('patientGender').value);
+            formData.append('symptoms', document.getElementById('symptoms').value);
+
+            // Toggle States
+            document.getElementById('placeholderState').classList.add('d-none');
+            document.getElementById('resultsState').classList.add('d-none');
+            document.getElementById('loaderState').classList.remove('d-none');
+
+            try {
+                const response = await fetch(`${API_URL}/api/analyze`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    // Update Images & Classification
+                    document.getElementById('origImg').src = `${API_URL}${data.findings.original_url}`;
+                    document.getElementById('gradcamImg').src = `${API_URL}${data.findings.gradcam_url}`;
+                    document.getElementById('predDisease').innerText = data.findings.predicted_disease;
+                    document.getElementById('predConfidence').innerText = `${data.findings.confidence}%`;
+
+                    // Update Progression Badge
+                    const badgeContainer = document.getElementById('progressionBadgeContainer');
+                    let statusClass = 'badge-stable';
+                    let icon = 'bi-dash-circle';
+
+                    if (data.progression_status.includes('Worsening')) {
+                        statusClass = 'badge-worsening';
+                        icon = 'bi-arrow-up-circle-fill';
+                    } else if (data.progression_status.includes('Improving')) {
+                        statusClass = 'badge-improving';
+                        icon = 'bi-arrow-down-circle-fill';
+                    }
+
+                    badgeContainer.innerHTML = `
+                        <span class="badge-status ${statusClass}">
+                            <i class="bi ${icon}"></i> ${data.progression_status}
+                        </span>
+                    `;
+
+                    // Update RAG Cases
+                    const casesList = document.getElementById('similarCasesList');
+                    casesList.innerHTML = '';
+                    data.retrieved_cases.forEach(c => {
+                        casesList.innerHTML += `
+                            <div class="col-md-6">
+                                <div class="case-card">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="badge bg-primary text-white" style="font-size:0.75rem;">${c.metadata.diagnosis || 'Matched Case'}</span>
+                                        <span class="text-muted small">${c.metadata.severity || 'N/A'}</span>
+                                    </div>
+                                    <p class="text-white-50 small mb-0" style="font-size:0.83rem; line-height: 1.5;">${c.summary}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    // Update Report
+                    document.getElementById('reportBox').innerText = data.report;
+
+                    // Display Results
+                    document.getElementById('loaderState').classList.add('d-none');
+                    document.getElementById('resultsState').classList.remove('d-none');
+                } else {
+                    alert("Error processing images.");
+                    document.getElementById('loaderState').classList.add('d-none');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Could not connect to FastAPI Backend Server.");
+                document.getElementById('loaderState').classList.add('d-none');
+            }
+        });
+    </script>
+</body>
+</html>
